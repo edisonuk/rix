@@ -22,7 +22,7 @@ BEGIN_FUNCTION(_start)
     
     /* enable PAE */
     mov %cr4, %eax
-    or $(CR4_PAE), %eax
+    or $(CR4_PAE_BIT), %eax
     mov %eax, %cr4 
 
     /* enable long mode by setting the LME flag */
@@ -33,7 +33,7 @@ BEGIN_FUNCTION(_start)
 
     /* enable paging and protected mode */
     mov %cr0, %eax
-    or $(CR0_PE | CR0_PG), %eax
+    or $(CR0_PE_BIT | CR0_PG_BIT), %eax
     mov %eax, %cr0
 
     /* zero the bss section */
@@ -51,13 +51,11 @@ BEGIN_FUNCTION(_start)
     /* 4 level paging */
     /* build PML4 */
 
-    /* page directory pointer table */
-    mov $PHY_ADDR(pdp), %eax   /* see mmu.c */
-    or $(X86_MMU_PG_FLAGS), %eax /* enable present and r/w flags */
+    mov $PHY_ADDR(pdp), %eax
+    or $(X86_MMU_PG_FLAGS), %eax
     mov %eax, PHY_ADDR(pdp)
 
-    /* page directory */
-    mov $PHY_ADDR(pdp), %eax
+    mov $PHY_ADDR(pde), %eax
     or $(X86_MMU_PG_FLAGS), %eax
     mov %eax, PHY_ADDR(pde)
 
@@ -65,6 +63,7 @@ BEGIN_FUNCTION(_start)
     mov $PHY_ADDR(pte), %eax
     or $(X86_MMU_PG_FLAGS), %eax
     mov %eax, PHY_ADDR(pte)
+    
 END_FUNCTION(_start)
 
 .section .bss

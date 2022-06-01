@@ -11,6 +11,10 @@ typedef short int16_t;
 typedef int int32_t;
 typedef long long int64_t;
 
+typedef uintptr_t vaddr_t;
+typedef uintptr_t paddr_t;
+typedef uintptr_t addr_t;
+
 typedef int8_t int_least8_t;
 typedef int16_t int_least16_t;
 typedef int32_t int_least32_t;
@@ -21,6 +25,6 @@ typedef uint32_t uint_least32_t;
 typedef uint64_t uint_least64_t;
 
 typedef long intptr_t;
-typedef unsigned long uintptr_t; 
+typedef unsigned long uintptr_t;
 
 #endif /* _TYPES_H_ */
