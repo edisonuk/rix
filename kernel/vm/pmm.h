@@ -1,11 +1,11 @@
-#ifndef _VM_H_
-#define _VM_H_
+#ifndef _PMM_H_
+#define _PMM_H_
 
-#include <stdint.h>
 #include "../list.h"
 #include "../types.h"
 #include "../arch.h"
 #include "../stdlib.h"
+#include <stdint.h>
 
 /** Per page structure */
 typedef struct vm_page {
@@ -16,7 +16,7 @@ typedef struct vm_page {
 
 #define VM_PAGE_FLAG_NONFREE (0x1)
 
-/*========================== Page Arena ==========================*/
+/* --------------------------- Page Arena --------------------------- */
 
 /**
  * Holds a fixed-sized array of pages. Pages are allocated during
@@ -54,7 +54,7 @@ typedef enum pmm_status {
  */
 pmm_status_t pmm_add_arena(pmm_arena_t *arena);
 
-/*======================== Allocator routines ========================*/
+/* ------------------------- Allocator routines ------------------------- */
 
 /* Allocates count non-contiguous pages of physical memory. */
 int pmm_alloc_pages(uint32_t count, list_node_t* list);
@@ -96,4 +96,4 @@ paddr_t vaddr_to_paddr(void *va);
 paddr_t page_to_paddr(const vm_page_t *page);
 vm_page_t *paddr_to_page(paddr_t addr);
 
-#endif /* _VM_H_ */
+#endif /* _PMM_H_ */

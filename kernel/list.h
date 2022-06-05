@@ -10,10 +10,15 @@
 
 #define container_of(ptr, type, member) ((type *)((addr_t)(ptr) - offsetof(type, member)))
 
-typedef struct list_node {
+struct list_node {
     struct list_node *prev;
     struct list_node *next;
-} list_node_t;
+};
+
+typedef struct list_node list_t;
+typedef struct list_node list_node_t;
+typedef struct list_node list_head_t;
+typedef struct list_node list_entry_t;
 
 #define LIST_INITIAL_VALUE(value) { &(value), &(value) }
 #define LIST_INITIAL_CLEARED_VALUE { NULL, NULL }
@@ -158,7 +163,7 @@ static inline list_node_t* list_peek_tail(list_node_t* list) {
         __t;                                            \
     })
 
-/* ====================== Iterators ====================== */
+/* ----------------------- Iterators ----------------------- */
 
 /** Iterate over the list */
 #define list_for_each(pos, head)                                        \

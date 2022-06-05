@@ -5,7 +5,9 @@
 #include <stdbool.h>
 #include "../../types.h"
 
-static inline void cpuid(uint32_t leaf, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx) {
+static inline void cpuid(uint32_t leaf, uint32_t *eax,
+    uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
+{
     __asm__ __volatile__(
         "cpuid\n\t"
         : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
@@ -13,7 +15,9 @@ static inline void cpuid(uint32_t leaf, uint32_t *eax, uint32_t *ebx, uint32_t *
     );
 }
 
-static inline void cpuid_c(uint32_t leaf, uint32_t csel, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx) {
+static inline void cpuid_c(uint32_t leaf, uint32_t csel,
+    uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
+{
     __asm__ __volatile__(
         "cpuid\n\t"
         : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)

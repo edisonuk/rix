@@ -1,11 +1,9 @@
 #include "pmm.h"
-#include "mm_p.h"
-
-#include <stdbool.h>
-#include <string.h>
-
+#include "balloc.h"
 #include "../list.h"
 #include "../mutex.h"
+#include <stdbool.h>
+#include <string.h>
 
 /** Linked list of arenas. */
 static LIST_HEAD(arena_list);

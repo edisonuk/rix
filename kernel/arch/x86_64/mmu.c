@@ -1,9 +1,9 @@
 #include <mmu.h>
 #include <defines.h>
 #include <string.h>
-#include "kernel_aspace.h"
+#include "aspace.h"
 
-#include "../../mm/pmm.h"
+#include "../../vm/pmm.h"
 
 /*
  * Largest linear and physical address size. Assume 48 bits linear and
@@ -19,7 +19,7 @@ pt_entry_t pte[NUM_PT_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
 
 static bool supported_1gb_pages = false;
 
-/*========================= Address Validity =========================*/
+/* ------------------------- Address Validity ------------------------- */
 
 int mmu_check_vaddr(vaddr_t vaddr) {
     /* check if vaddr is page aligned */
@@ -46,7 +46,7 @@ int mmu_check_paddr(paddr_t paddr) {
     return paddr <= (((uint64_t)1ull << g_paddr_width) - 1);
 }
 
-/*===================== Page frame number getters =====================*/
+/* -------------------- Page frame number getters -------------------- */
 
 /* 1GiB pages */
 static inline uint64_t get_pfn_from_pdpe(uint64_t pdpe) {
@@ -69,7 +69,7 @@ static inline uint64_t get_pfn_from_pte(uint64_t pte) {
     return pfn;
 }
 
-/*===================== Table entry getter routines =====================*/
+/* -------------------- Table entry getter routines -------------------- */
 
 static inline uint64_t
 get_pml4e_from_pml4_table(vaddr_t vaddr, addr_t pml4t_base_addr) {
@@ -103,7 +103,7 @@ get_pte_from_ptable(vaddr_t vaddr, addr_t pt_base_addr) {
     return X86_PHYS_TO_VIRT(ptable_base_ptr[pte_index]);
 }
 
-/*======================= Address mapping routines =======================*/
+/* ---------------------- Address mapping routines ---------------------- */
 
 /** Walk the page table structures. */
 mmu_status_t mmu_get_mapping(vaddr_t vaddr, addr_t pml4_base_addr,
@@ -171,7 +171,7 @@ done:
     return NO_ERROR;
 }
 
-/*======================= Table entry update routines =======================*/
+/* ---------------------- Table entry update routines ---------------------- */
 
 static void update_pt_entry(vaddr_t vaddr, uint64_t pde, paddr_t paddr, uint64_t flags) {
     uint64_t *pt_table_ptr = (uint64_t *)(pde & X86_4KB_PAGE_FRAME);

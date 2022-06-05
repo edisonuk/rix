@@ -6,8 +6,8 @@
  *      1: Available
  */
 BEGIN_FUNCTION(check_long_mode)
-    pushf   /* save flags */
-    push $0 /* zero the flags */
+    pushf
+    push $0
     popf
 
     /* check for cpuid availibility */
@@ -20,7 +20,7 @@ BEGIN_FUNCTION(check_long_mode)
     mov $0x80000000, %eax
     cpuid
     cmp $0x80000001, %eax
-    jb .Lno_long_mode  /* long mode not supported */
+    jb .Lno_long_mode
 
     mov $0x80000001, %eax
     cpuid
@@ -28,12 +28,12 @@ BEGIN_FUNCTION(check_long_mode)
     jz .Lno_long_mode
 
     /* long mode available */
-    popf /* restore flags */
+    popf
     xor $1, %eax
     ret
 
 .Lno_long_mode:
-    popf /* restore flags */
+    popf
     mov %eax, %eax
     ret
 END_FUNCTION(check_long_mode)
