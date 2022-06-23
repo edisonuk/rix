@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+BINUTILS_VERSION=
+GCC_VERSION=
+
+BUILD_TARGET="x86_64-elf"
+
+#---------------------------------------------------------------------
+# Download and extract source from GNU FTP server
+#---------------------------------------------------------------------
+
+function download_sources() {
+  download_and_extract "binutils" $BINUTILS_VERSION
+  download_and_extract "gcc" $GCC_VERSION
+}
+
+function download_and_extract() {
+  name=$1
+  version=$2
+
+  if [! -f $name-$version.tar.gz]
+  then
+    wget -q https://ftp.gnu.org/gnu/$name/$name-$version.tar.gz
+    tar -xf $name-$version.tar.gz
+  else
+    echo "$name-$version.tar.gz already exists!"
+  fi
+}
+
+#---------------------------------------------------------------------
+# Compile
+#---------------------------------------------------------------------
+
+function compile_all() {
+  compile_binutils
+  compile_gcc
+}
+
+function compile_binutils() {
+  mkdir -p build-binutils-$BINUTILS_VERSION
+  cd build-binutils-$BINUTILS_VERSION
+
+  configure_args="                \
+    --target=${BUILD_TARGET}      \
+    --prefix=$BUILD_DIR/$1/output \
+    --with-sysroot                \
+    --disable-nls                 \
+    --disable-werror"
+
+  echo "Configuring Binutils"
+  ../binutils-$BINUTILS_VERSION/configure $configure_args >> binutils_configure.log
+
+  echo "Compiling Binutils"
+  make >> binutils_make.log
+}
+
+function compile_gcc() {
+  mkdir -p build-gcc-$GCC_VERSION
+  cd build-gcc-$GCC_VERSION
+
+  configure_args="                    \
+    --target=${BUILD_TARGET}          \
+    --program-prefix=${BUILD_TARGET}- \
+    --prefix=$BUILD_DIR/$1/output     \
+    --disable-nls                     \
+    --enable-languages=c,c++          \
+    --without-headers"
+
+  echo "Configuring GCC"
+  ../gcc-$GCC_VERSION/configure $configure_args >> gcc_configure.log
+
+  # building libgcc without red-zone
+
+  echo "Compiling GCC"
+  make all-gcc >> gcc_make.log
+
+  echo "Installing GCC"
+  make install-gcc >> gcc_install.log
+  
+  echo "Compiling libgcc"
+  make all-target-libgcc >> libgcc_make.log
+  
+  echo "Compiling libgcc"
+  make install-target-libgcc >> libgcc
+}

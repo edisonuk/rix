@@ -1,8 +1,16 @@
 ENTRY(_start)
 
+/* http://ringzeroandlower.com/2017/08/08/x86-64-kernel-boot.html */
 SECTIONS {
     /* TODO: define KERNEL_BASE, KERNEL_LOAD_OFFSET */
-    . = KERNEL_BASE + KERNEL_LOAD_OFFSET;
+    /* KERNEL_BASE = 1M                             */
+    /* KERNEL_LOAD_OFFSET = 0xFFFFFFFF80000000      */
+    
+    . = KERNEL_BASE;
+    _kernel_physical_start = .;
+    
+    . += KERNEL_LOAD_OFFSET;
+    _kernel_virtual_start = .;
 
     .text   : {
         __text_start = .;
@@ -15,7 +23,7 @@ SECTIONS {
      * but only 4KiB on x64
      */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
-    __code_end = .;
+    __text_end = .;
 
     . = ALIGN(CONSTANT(MAXPAGESIZE));
 

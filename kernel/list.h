@@ -23,8 +23,7 @@ typedef struct list_node list_entry_t;
 #define LIST_INITIAL_VALUE(value) { &(value), &(value) }
 #define LIST_INITIAL_CLEARED_VALUE { NULL, NULL }
 
-#define LIST_HEAD(name) \
-    list_node_t name = LIST_INITIAL_VALUE(name)
+#define LIST_NODE(name) list_node_t name = LIST_INITIAL_VALUE(name)
 
 static inline void list_initialize(struct list_node *list)  { list->prev = list->next = list; }
 static inline void list_clear_entry(list_node_t *entry)     { entry->prev = entry->next = 0; }
@@ -204,7 +203,7 @@ static inline void list_split_after(list_node_t* list, list_node_t* pos, list_no
 
 static inline void list_splice_after(list_node_t* splice_from, list_node_t* pos) {
     if (list_is_empty(splice_from)) {
-        list_initalize(splice_from);
+        list_initialize(splice_from);
     }
 }
 

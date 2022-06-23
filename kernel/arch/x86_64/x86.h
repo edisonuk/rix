@@ -1,9 +1,9 @@
 #ifndef _X86_H_
 #define _X86_H_
 
-#include <reg_defs.h>
-#include <stdbool.h>
+#include "reg_defs.h"
 #include "../../types.h"
+#include <stdbool.h>
 
 static inline void cpuid(uint32_t leaf, uint32_t *eax,
     uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
@@ -25,13 +25,9 @@ static inline void cpuid_c(uint32_t leaf, uint32_t csel,
     );
 }
 
-static unsigned long cpuid_get_addr_width(void) {
-    uint32_t eax, ebx, ecx, edx;
- 
+static inline unsigned long cpuid_get_addr_width(void) {
+    uint32_t eax, ebx, ecx, edx; 
     cpuid(0x80000008, &eax, &ebx, &ecx, &edx);
-
-    /* Bits 07-00: Physical Address bits */
-    /* Bits 15-08: Linear Address bits */
     return (eax & 0xff);
 }
 

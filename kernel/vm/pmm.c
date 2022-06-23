@@ -6,21 +6,21 @@
 #include <string.h>
 
 /** Linked list of arenas. */
-static LIST_HEAD(arena_list);
+static LIST_NODE(arena_list);
 
 #define PAGE_BELONGS_TO_ARENA(page, arena)                                              \
     ((uintptr_t)(page) >= (uintptr_t)(arena)->page_array) &&                            \
     ((uintptr_t)(page) < ((uintptr_t)(arena)->page_array + ARENA_PAGE_COUNT(arena)))
 
-#define PAGE_INDEX_IN_ARENA(page, arena)    \
+#define PAGE_INDEX_IN_ARENA(page, arena)                                                \
     (((uintptr_t)page - (uintptr_t)(arena)->page_array) / sizeof(vm_page_t))
 
-#define PAGE_ADDRESS_FROM_ARENA(page, arena)    \
+#define PAGE_ADDRESS_FROM_ARENA(page, arena)                                            \
     (paddr_t)PAGE_INDEX_IN_ARENA(page, arena) * PAGE_SIZE + (arena)->base;
 
 #define ARENA_PAGE_COUNT(arena) (arena->size / PAGE_SIZE)
 
-#define ADDRESS_BELONGS_TO_ARENA(address, arena)    \
+#define ADDRESS_BELONGS_TO_ARENA(address, arena)                                        \
     ((address) >= arena->base && (address) <= arena->base + arena->size - 1)
 
 
@@ -57,7 +57,7 @@ vm_page_t *paddr_to_page(paddr_t addr) {
     return NULL;
 }
 
-/*============================ Page Arena Routines ============================*/
+/* ------------------------- Page Arena Routines ------------------------- */
 
 pmm_status_t pmm_add_arena(pmm_arena_t *arena) {
     /* TODO: assert(IS_PAGE_ALIGNED(arena->base)) */
@@ -319,7 +319,7 @@ void *pmm_alloc_kpages(int count, list_node_t *list) {
             return NULL;
         }
 
-        return paddr_to_kvaddr(vm_page_to_vaddr())
+        return paddr_to_kvaddr(vm_page_to_vaddr());
     }
 }
 

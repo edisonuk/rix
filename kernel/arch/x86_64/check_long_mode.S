@@ -1,5 +1,4 @@
-/*
- * Check CPU for long mode support
+/* Check CPU for long mode support.
  * 
  * Returns status in %eax register
  *      0: Not Available
@@ -14,7 +13,7 @@ BEGIN_FUNCTION(check_long_mode)
     mov $0, %eax
     cpuid
     cmp $1, %eax
-    jb .Lno_long_mode  /* no cpuid */
+    jb .Lno_cpuid
 
     /* check for extended CPUID functions */
     mov $0x80000000, %eax
@@ -32,8 +31,10 @@ BEGIN_FUNCTION(check_long_mode)
     xor $1, %eax
     ret
 
+.Lno_cpuid:
 .Lno_long_mode:
     popf
     mov %eax, %eax
     ret
+    
 END_FUNCTION(check_long_mode)

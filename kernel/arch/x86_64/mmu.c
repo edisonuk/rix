@@ -1,12 +1,12 @@
-#include <mmu.h>
-#include <defines.h>
-#include <string.h>
+#include "defines.h"
 #include "aspace.h"
-
+#include "mmu.h"
+#include "x86.h"
 #include "../../vm/pmm.h"
 
-/*
- * Largest linear and physical address size. Assume 48 bits linear and
+#include <string.h>
+
+/* Largest linear and physical address size. Assume 48 bits linear and
  * 32 bits physical. Use cpuid 80000008h query to update later.
  */
 unsigned char g_vaddr_width = 48; 
@@ -105,7 +105,6 @@ get_pte_from_ptable(vaddr_t vaddr, addr_t pt_base_addr) {
 
 /* ---------------------- Address mapping routines ---------------------- */
 
-/** Walk the page table structures. */
 mmu_status_t mmu_get_mapping(vaddr_t vaddr, addr_t pml4_base_addr,
                     pt_entry_t *last_valid_entry, uint64_t *out_flags, uint32_t *out_level) {
     uint64_t pml4e, pdpe, pde, pte;
@@ -136,7 +135,8 @@ mmu_status_t mmu_get_mapping(vaddr_t vaddr, addr_t pml4_base_addr,
 
     /* 1 GiB huge pages */
     if ((pdpe & X86_PAGE_BIT_PS) && supported_1gb_pages) {
-        *last_valid_entry = get_pfn_from_pdpe(X86_VIRT_TO_PHYS(pdpe)) + ((uint64_t)vaddr & X86_1GB_PAGE_OFFSET_MASK);
+        *last_valid_entry = get_pfn_from_pdpe(X86_VIRT_TO_PHYS(pdpe))
+                            + ((uint64_t)vaddr & X86_1GB_PAGE_OFFSET_MASK);
         goto done;
     }
 
@@ -150,7 +150,8 @@ mmu_status_t mmu_get_mapping(vaddr_t vaddr, addr_t pml4_base_addr,
 
     /* 2 MiB huge pages */
     if (pde & X86_PAGE_BIT_PS) {
-        *last_valid_entry = get_pfn_from_pde(X86_VIRT_TO_PHYS(pde)) + ((uint64_t)vaddr & X86_2MB_PAGE_OFFSET_MASK);
+        *last_valid_entry = get_pfn_from_pde(X86_VIRT_TO_PHYS(pde))
+                            + ((uint64_t)vaddr & X86_2MB_PAGE_OFFSET_MASK);
         goto done;
     }
 
@@ -163,7 +164,9 @@ mmu_status_t mmu_get_mapping(vaddr_t vaddr, addr_t pml4_base_addr,
         return ERR_ENTRY_NOT_PRESENT;
     }
 
-    *last_valid_entry = get_pfn_from_pte(X86_VIRT_TO_PHYS(pte)) + ((uint64_t)vaddr & X86_4KB_PAGE_OFFSET_MASK);
+    *last_valid_entry = get_pfn_from_pte(X86_VIRT_TO_PHYS(pte))
+                        + ((uint64_t)vaddr & X86_4KB_PAGE_OFFSET_MASK);
+    
     *out_flags = (pte & X86_PAGE_ENTRY_FLAGS_MASK);
 
 done:
@@ -173,7 +176,8 @@ done:
 
 /* ---------------------- Table entry update routines ---------------------- */
 
-static void update_pt_entry(vaddr_t vaddr, uint64_t pde, paddr_t paddr, uint64_t flags) {
+static void
+update_pt_entry(vaddr_t vaddr, uint64_t pde, paddr_t paddr, uint64_t flags) {
     uint64_t *pt_table_ptr = (uint64_t *)(pde & X86_4KB_PAGE_FRAME);
     uint32_t pt_index = (((uint64_t)vaddr >> PT_SHIFT) & ((1UL << ADDR_OFFSET) - 1));
     
@@ -185,43 +189,48 @@ static void update_pt_entry(vaddr_t vaddr, uint64_t pde, paddr_t paddr, uint64_t
         pt_table_ptr[pt_index] |= X86_PAGE_BIT_U;
 }
 
-static void update_pd_entry(vaddr_t vaddr, uint64_t pdpe, pt_entry_t map, uint64_t flags) {
+static void
+update_pd_entry(vaddr_t vaddr, uint64_t pdpe, pt_entry_t map, uint64_t flags) {
     uint64_t *pd_table_ptr = (uint64_t *)(pdpe & X86_4KB_PAGE_FRAME);
     uint32_t pd_index = (((uint64_t)vaddr >> PD_SHIFT) & ((1UL << ADDR_OFFSET) - 1));
     
     /* set the address and present bit */
     pd_table_ptr[pd_index] = (uint64_t)map;
-    pd_table_ptr[pd_index] |= X86_PAGE_BIT_P | X86_PAGE_BIT_RW;
+    pd_table_ptr[pd_index] |= X86_MMU_PG_FLAGS;
 
     if (flags & X86_PAGE_BIT_U)
         pd_table_ptr[pd_index] |= X86_PAGE_BIT_U;
 }
 
-static void update_pdp_entry(vaddr_t vaddr, uint64_t pml4e, pt_entry_t map, uint64_t flags) {
+static void
+update_pdp_entry(vaddr_t vaddr, uint64_t pml4e, pt_entry_t map, uint64_t flags) {
     uint64_t *pdp_table_ptr = (uint64_t *)(pml4e & X86_4KB_PAGE_FRAME);
     uint32_t pdp_index = (((uint64_t)vaddr >> PDP_SHIFT) & ((1UL << ADDR_OFFSET) - 1));
     
     /* set the address and present bit */
     pdp_table_ptr[pdp_index] = (uint64_t)map;
-    pdp_table_ptr[pdp_index] |= X86_PAGE_BIT_P | X86_PAGE_BIT_RW;
+    pdp_table_ptr[pdp_index] |= X86_MMU_PG_FLAGS;
 
     if (flags & X86_PAGE_BIT_U)
         pdp_table_ptr[pdp_index] |= X86_PAGE_BIT_U;
 }
 
-static void update_pml4_entry(vaddr_t vaddr, uint64_t pml4_addr, pt_entry_t map, uint64_t flags) {
+static void
+update_pml4_entry(vaddr_t vaddr, uint64_t pml4_addr, pt_entry_t map, uint64_t flags) {
     uint64_t *pml4_table_ptr = (uint64_t *)(pml4_addr);
     uint32_t pml4_index = (((uint64_t)vaddr >> PML4_SHIFT) & ((1UL << ADDR_OFFSET) - 1));
     
     /* set the address and present bit */
     pml4_table_ptr[pml4_index] = map;
-    pml4_table_ptr[pml4_index] |= X86_PAGE_BIT_P | X86_PAGE_BIT_RW;
+    pml4_table_ptr[pml4_index] |= X86_MMU_PG_FLAGS;
 
     if (flags & X86_PAGE_BIT_U)
         pml4_table_ptr[pml4_index] |= X86_PAGE_BIT_U;
 }
 
-/** Allocates a page table. */
+/** 
+ * @brief  Allocates a page table.
+ */
 static pt_entry_t *allocate_page_table(void) {
     paddr_t paddr;
     vm_page_t *page;
@@ -345,11 +354,11 @@ done:
 }
 
 /**
- * Check wall the entires of the page table for present bit.
- *
+ * @brief   Check wall the entires of the page table for present bit.
  * @returns True if none of the entries has present bit set.
  */
-static inline bool is_page_table_clear(const pt_entry_t* page_table) {
+static inline bool
+is_page_table_clear(const pt_entry_t* page_table) {
     uint32_t lower_idx;
     for (lower_idx = 0; lower_idx < NUM_PT_ENTRIES; ++lower_idx) {
         if (page_table[lower_idx] & X86_PAGE_BIT_P) {
@@ -360,7 +369,8 @@ static inline bool is_page_table_clear(const pt_entry_t* page_table) {
     return true;
 }
 
-static void mmu_unmap_entry(vaddr_t vaddr, page_level_t level, vaddr_t table_entry) {
+static void
+mmu_unmap_entry(vaddr_t vaddr, page_level_t level, vaddr_t table_entry) {
     uint32_t offset = 0, next_level_offset = 0;
     vaddr_t *table, *next_table_addr, value;
 
@@ -413,6 +423,7 @@ static void mmu_unmap_entry(vaddr_t vaddr, page_level_t level, vaddr_t table_ent
         return;
     }
 
+    /* unmap any lower level entries */
     mmu_unmap_entry(vaddr, level - 1, (vaddr_t) next_table_addr);
 
     next_table_addr = (vaddr_t *)((vaddr)(next_table_addr) & X86_4KB_PAGE_FRAME);

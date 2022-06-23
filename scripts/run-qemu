@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+case $ARCH in
+  aarch64)
+    QEMU=qemu-system-aarch64
+    ;;
+  x86_64)
+    QEMU=qemu-system-x86_64
+    ARGS=
+    ;;
+
+
+# run qemu
+exec $QEMU -kernel "$QEMU_KERNEL" $ARGS

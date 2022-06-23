@@ -1,6 +1,5 @@
-#include "mm_p.h"
+#include "balloc.h"
 
-#include <stdint.h>
 #include <stddef.h>
 
 /* defined in kernel.ld */
